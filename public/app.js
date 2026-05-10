@@ -19,6 +19,12 @@ document.querySelectorAll('.tab').forEach(tab => {
       setBubble("Hora de calçar as luvas! Defenda todos os chutes no Paredão!");
     } else if (target === 'quiz') {
       setBubble("Concentração total! Quero ver se você sabe tudo de Copa!");
+    } else if (target === 'tabela') {
+      setBubble("A tabela completa da Copa 2026! Quem será que o Brasil pega?");
+      renderTabela();
+    } else if (target === 'bolao') {
+      setBubble("Hora de mostrar que você entende! Coloque seus palpites no Bolão!");
+      renderBolao();
     }
   });
 });
@@ -342,3 +348,94 @@ window.onload = () => {
   updateHistoryDisplay();
   setBubble("E aí, Paredão! Sou o Triondão. O que quer saber da Copa?");
 };
+
+// === TABELA E BOLÃO (COPA 2026) ===
+const matches2026 = [
+  { id: 1, group: "A", date: "11/06/2026", time: "17:00", venue: "Estádio Azteca", home: "México", away: "A2" },
+  { id: 2, group: "A", date: "11/06/2026", time: "20:00", venue: "Guadalajara", home: "A3", away: "A4" },
+  { id: 3, group: "B", date: "12/06/2026", time: "16:00", venue: "Los Angeles", home: "Estados Unidos", away: "B2" },
+  { id: 4, group: "C", date: "12/06/2026", time: "19:00", venue: "Toronto", home: "Canadá", away: "C2" },
+  { id: 71, group: "G", date: "21/06/2026", time: "16:00", venue: "Dallas", home: "Brasil", away: "G2" },
+  { id: 72, group: "G", date: "26/06/2026", time: "19:00", venue: "Houston", home: "G3", away: "Brasil" },
+  { id: 73, group: "G", date: "01/07/2026", time: "15:00", venue: "Miami", home: "Brasil", away: "G4" },
+  { id: 104, group: "FINAL", date: "19/07/2026", time: "16:00", venue: "New York/New Jersey", home: "Vencedor S1", away: "Vencedor S2" }
+];
+
+function renderTabela(filter = '') {
+  const container = document.getElementById('tabela-list');
+  container.innerHTML = '';
+  
+  const filtered = matches2026.filter(m => 
+    m.home.toLowerCase().includes(filter.toLowerCase()) || 
+    m.away.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#ccc;">Nenhum jogo encontrado.</p>';
+    return;
+  }
+
+  filtered.forEach(m => {
+    container.innerHTML += `
+      <div class="match-card">
+        <div class="match-header">
+          <span>Grupo ${m.group}</span>
+          <span>📅 ${m.date} - ${m.time} | 🏟️ ${m.venue}</span>
+        </div>
+        <div class="match-teams">
+          <span>${m.home}</span>
+          <span class="match-vs">X</span>
+          <span>${m.away}</span>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function filterTabela(term) {
+  if (term !== undefined) {
+    document.getElementById('filter-matches').value = term;
+  }
+  const input = document.getElementById('filter-matches').value;
+  renderTabela(input);
+}
+
+function renderBolao() {
+  const container = document.getElementById('bolao-list');
+  container.innerHTML = '';
+  const saved = JSON.parse(localStorage.getItem('triondao_bolao') || '{}');
+
+  matches2026.forEach(m => {
+    const sHome = saved[`m_${m.id}_home`] !== undefined ? saved[`m_${m.id}_home`] : '';
+    const sAway = saved[`m_${m.id}_away`] !== undefined ? saved[`m_${m.id}_away`] : '';
+
+    container.innerHTML += `
+      <div class="match-card">
+        <div class="match-header">
+          <span>Grupo ${m.group} | 📅 ${m.date}</span>
+        </div>
+        <div class="match-teams">
+          <span>${m.home}</span>
+          <input type="number" min="0" class="bolao-input" id="m_${m.id}_home" value="${sHome}">
+          <span class="match-vs">X</span>
+          <input type="number" min="0" class="bolao-input" id="m_${m.id}_away" value="${sAway}">
+          <span>${m.away}</span>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function saveBolao() {
+  const saved = {};
+  matches2026.forEach(m => {
+    saved[`m_${m.id}_home`] = document.getElementById(`m_${m.id}_home`).value;
+    saved[`m_${m.id}_away`] = document.getElementById(`m_${m.id}_away`).value;
+  });
+  localStorage.setItem('triondao_bolao', JSON.stringify(saved));
+  
+  const msg = document.getElementById('bolao-msg');
+  msg.innerText = "✅ Palpites salvos com sucesso!";
+  setTriondaoState('celebrating');
+  setTimeout(() => msg.innerText = "", 3000);
+}

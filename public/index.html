@@ -16,8 +16,10 @@
       <p class="subtitle">Seu amigão especialista em Copa do Mundo!</p>
       <nav class="tabs">
         <button class="tab active" data-tab="chat">💬 Chat</button>
-        <button class="tab" data-tab="quiz">🧠 Quiz da Copa</button>
-        <button class="tab" data-tab="penalty">🥅 Defenda o Gol!</button>
+        <button class="tab" data-tab="quiz">🧠 Quiz</button>
+        <button class="tab" data-tab="penalty">🥅 Paredão</button>
+        <button class="tab" data-tab="tabela">📅 Tabela</button>
+        <button class="tab" data-tab="bolao">🎯 Bolão</button>
       </nav>
     </header>
 
@@ -81,6 +83,35 @@
                   <button class="btn-large" onclick="startGame()" style="padding: 15px 40px; border-radius: 30px; border: none; background: linear-gradient(135deg, #ffd700, #ffaa00); color: #1a5e1a; font-family: 'Fredoka One', cursive; font-size: 1.3em; cursor: pointer;">Começar!</button>
               </div>
           </div>
+      </div>
+    </section>
+
+    <!-- Tab: Tabela -->
+    <section id="tabela" class="content-area">
+      <div class="card">
+        <h2>Tabela de Jogos 2026</h2>
+        <div class="filter-bar">
+          <input type="text" id="filter-matches" placeholder="Buscar seleção (ex: Brasil)" onkeyup="filterTabela()">
+          <button onclick="filterTabela('Brasil')">🇧🇷 Jogos do Brasil</button>
+          <button onclick="filterTabela('')">Todos</button>
+        </div>
+        <div class="matches-list" id="tabela-list">
+          <!-- Gerado via JS -->
+        </div>
+        <p style="font-size: 0.8em; margin-top: 10px; color: #ccc;">*Tabela baseada na grade preliminar da FIFA 2026. Equipes a definir nas eliminatórias.</p>
+      </div>
+    </section>
+
+    <!-- Tab: Bolão -->
+    <section id="bolao" class="content-area">
+      <div class="card">
+        <h2>Seu Bolão da Copa 🎯</h2>
+        <p style="margin-bottom: 15px; color: #ddd;">Dê o seu palpite para os jogos! Fica tudo salvo no seu navegador.</p>
+        <div class="matches-list bolao-list" id="bolao-list">
+          <!-- Gerado via JS -->
+        </div>
+        <button class="btn-large" onclick="saveBolao()" style="margin-top: 20px; width: 100%;">Salvar Meus Palpites</button>
+        <div id="bolao-msg" style="color: #2ecc71; margin-top: 10px; font-weight: bold; height: 20px;"></div>
       </div>
     </section>
 

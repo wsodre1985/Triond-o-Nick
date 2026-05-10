@@ -662,6 +662,44 @@ header h1 {
   100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
 }
 
+/* === TABELA E BOLÃO === */
+.filter-bar {
+  display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.filter-bar input {
+  flex: 1; padding: 10px; border-radius: 10px; border: none; font-family: 'Nunito', sans-serif;
+  min-width: 150px;
+}
+.filter-bar button {
+  padding: 10px 15px; border-radius: 10px; border: none; background: #2ecc71; color: white;
+  font-family: 'Nunito', sans-serif; font-weight: bold; cursor: pointer; transition: 0.3s;
+}
+.filter-bar button:hover { background: #27ae60; }
+
+.matches-list {
+  display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 5px;
+}
+.matches-list::-webkit-scrollbar { width: 6px; }
+.matches-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+.match-card {
+  background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.match-header {
+  display: flex; justify-content: space-between; font-size: 0.85em; color: #ffd700;
+}
+.match-teams {
+  display: flex; justify-content: center; align-items: center; gap: 15px; font-weight: bold; font-size: 1.1em;
+}
+.match-vs { color: #888; font-size: 0.9em; }
+
+.bolao-input {
+  width: 40px; text-align: center; padding: 5px; border-radius: 8px; border: 2px solid #555;
+  background: #222; color: white; font-weight: bold; font-size: 1.1em;
+}
+.bolao-input:focus { border-color: #ffd700; outline: none; }
+
 /* === RESPONSIVE === */
 @media (max-width: 500px) {
   header h1 { font-size: 1.8em; }
