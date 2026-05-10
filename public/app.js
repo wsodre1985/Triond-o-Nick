@@ -203,15 +203,16 @@ function updateHistoryDisplay() {
   document.getElementById('total-score').textContent = localStorage.getItem('triondao_score') || '0';
 }
 
-// === LÓGICA DO JOGO DO GOLEIRO (PAREDÃO) ===
-const canvas = document.getElementById('goalkeeper-canvas');
-const ctx = canvas.getContext('2d');
+// === LÓGICA DO JOGO DE PÊNALTI (CHUTADOR) ===
+const canvas = document.getElementById('penalty-canvas');
+const ctx = canvas ? canvas.getContext('2d') : null;
 let gameReq;
-let ball = { x: 250, y: 350, radius: 25, tgtX: 250, tgtY: 100, speed: 0.05, progress: 0, active: false };
-let gloves = { x: 250, y: 175, radius: 35 };
+let ball = { x: 250, y: 320, radius: 25, tgtX: 250, tgtY: 100, speed: 0.03, progress: 0, active: false };
+let gloves = { x: 250, y: 100, radius: 30, targetX: 250, speed: 2 };
 let gameScore = 0;
 let shotsTaken = 0;
-const maxShots = 10;
+const maxShots = 5;
+let gameIsRunning = false;
 
 // Imagem da bola (SVG embutido)
 const imgBall = new Image();
@@ -221,112 +222,161 @@ function startGame() {
   document.getElementById('game-overlay').style.display = 'none';
   gameScore = 0;
   shotsTaken = 0;
+  gameIsRunning = true;
   document.getElementById('game-score').innerText = gameScore;
-  setBubble("Prepara a ponte! Lá vem bomba!");
+  document.getElementById('game-chances').innerText = shotsTaken;
+  setBubble("Escolha o canto e mande pro fundo da rede!");
+  
+  // Reseta posição da bola
+  ball.x = 250; ball.y = 320; ball.active = false;
+  
+  if(gameReq) cancelAnimationFrame(gameReq);
   loop();
-  setTimeout(shootBall, 1000);
-}
-
-function shootBall() {
-  if (shotsTaken >= maxShots) {
-    endGame();
-    return;
-  }
-
-  shotsTaken++;
-  ball.tgtX = Math.random() * 400 + 50;
-  ball.tgtY = Math.random() * 150 + 20;
-  ball.startX = 250;
-  ball.startY = 350;
-  ball.startR = 30;
-  ball.progress = 0;
-  ball.speed = 0.02 + (shotsTaken * 0.003);
-  ball.active = true;
 }
 
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Desenha o gol
-  ctx.strokeStyle = "rgba(255,255,255,0.3)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(20, 10, 460, 180); // Trave
+  ctx.strokeStyle = "rgba(255,255,255,0.4)";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(20, 20, 460, 160); // Trave superior e laterais
+  // Rede (linhas simples)
+  ctx.beginPath();
+  for(let i=20; i<=480; i+=20) { ctx.moveTo(i, 20); ctx.lineTo(i, 180); }
+  for(let i=20; i<=180; i+=20) { ctx.moveTo(20, i); ctx.lineTo(480, i); }
+  ctx.strokeStyle = "rgba(255,255,255,0.1)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
 
-  if (ball.active) {
-    ball.progress += ball.speed;
-    const ease = ball.progress;
-    const currentX = ball.startX + (ball.tgtX - ball.startX) * ease;
-    const currentY = ball.startY + (ball.tgtY - ball.startY) * ease;
-    const currentR = ball.startR - (ball.startR - 15) * ease;
-
-    ctx.drawImage(imgBall, currentX - currentR, currentY - currentR, currentR * 2, currentR * 2);
-
-    if (ball.progress >= 1) {
-      ball.active = false;
-      goalScored();
+  // Movimento automático do goleiro (luvas) se a bola não foi chutada ou está no começo do voo
+  if (gameIsRunning && (!ball.active || ball.progress < 0.5)) {
+    if (Math.abs(gloves.targetX - gloves.x) < 5) {
+      // Sorteia novo alvo para o goleiro pular
+      gloves.targetX = Math.random() * 400 + 50; 
     }
+    // Goleiro se move
+    if (gloves.x < gloves.targetX) gloves.x += gloves.speed + (Math.random()*2);
+    if (gloves.x > gloves.targetX) gloves.x -= gloves.speed + (Math.random()*2);
+  } else if (ball.active && ball.progress >= 0.5) {
+      // No final do chute, goleiro tenta pular desesperadamente na direção da bola
+      if (gloves.x < ball.tgtX) gloves.x += gloves.speed * 2;
+      if (gloves.x > ball.tgtX) gloves.x -= gloves.speed * 2;
   }
 
-  // Desenha luvas
+  // Desenha luvas (goleiro)
   ctx.beginPath();
   ctx.arc(gloves.x, gloves.y, gloves.radius, 0, Math.PI * 2);
   ctx.fillStyle = "orange";
   ctx.fill();
   ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
   ctx.stroke();
+  
+  // Desenha a bola
+  if (ball.active) {
+    ball.progress += ball.speed;
+    const ease = ball.progress; // Linear simple
+    const currentX = ball.startX + (ball.tgtX - ball.startX) * ease;
+    const currentY = ball.startY + (ball.tgtY - ball.startY) * ease;
+    const currentR = ball.startR - (ball.startR - 15) * ease; // Bola diminui (perspectiva)
+
+    ctx.drawImage(imgBall, currentX - currentR, currentY - currentR, currentR * 2, currentR * 2);
+
+    if (ball.progress >= 1) {
+      ball.active = false;
+      checkGoal();
+    }
+  } else {
+    // Bola parada na marca do pênalti
+    ctx.drawImage(imgBall, ball.x - 20, ball.y - 20, 40, 40);
+  }
 
   gameReq = requestAnimationFrame(loop);
 }
 
-canvas.addEventListener('mousemove', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  gloves.x = (e.clientX - rect.left) * (canvas.width / rect.width);
-  gloves.y = (e.clientY - rect.top) * (canvas.height / rect.height);
-  attemptSave();
-});
+// Quando clicar no canvas, chuta a bola
+if(canvas) {
+  canvas.addEventListener('mousedown', (e) => {
+    if (!gameIsRunning || ball.active) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+    
+    // Só permite chutar da metade da tela pra cima (no gol)
+    if (clickY > 200) return;
 
-canvas.addEventListener('touchmove', (e) => {
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const touch = e.touches[0];
-  gloves.x = (touch.clientX - rect.left) * (canvas.width / rect.width);
-  gloves.y = (touch.clientY - rect.top) * (canvas.height / rect.height);
-  attemptSave();
-}, { passive: false });
+    shootBallTo(clickX, clickY);
+  });
+  
+  canvas.addEventListener('touchstart', (e) => {
+    if (!gameIsRunning || ball.active) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const clickX = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    const clickY = (touch.clientY - rect.top) * (canvas.height / rect.height);
+    
+    if (clickY > 200) return;
+    shootBallTo(clickX, clickY);
+  }, { passive: false });
+}
 
-function attemptSave() {
-  if (!ball.active) return;
-  const ease = ball.progress;
-  const bx = ball.startX + (ball.tgtX - ball.startX) * ease;
-  const by = ball.startY + (ball.tgtY - ball.startY) * ease;
+function shootBallTo(targetX, targetY) {
+  shotsTaken++;
+  document.getElementById('game-chances').innerText = shotsTaken;
+  
+  ball.tgtX = targetX;
+  ball.tgtY = targetY;
+  ball.startX = 250;
+  ball.startY = 320;
+  ball.startR = 20;
+  ball.progress = 0;
+  ball.speed = 0.03; // Velocidade do chute
+  ball.active = true;
+}
 
-  const dist = Math.sqrt((bx - gloves.x) ** 2 + (by - gloves.y) ** 2);
-  if (dist < gloves.radius + 15) {
-    ball.active = false;
-    saveMade();
+function checkGoal() {
+  // Calcula distância final entre bola e luva do goleiro
+  const dist = Math.sqrt((ball.tgtX - gloves.x) ** 2 + (ball.tgtY - gloves.y) ** 2);
+  
+  // Se a bola for pra fora (fora do retângulo do gol)
+  if (ball.tgtX < 20 || ball.tgtX > 480 || ball.tgtY < 20 || ball.tgtY > 180) {
+      setTriondaoState('sad');
+      setBubble("Iiiisolou!!! Bateu na lua!");
+  } 
+  // Se bater na luva (raio da luva + raio da bola)
+  else if (dist < gloves.radius + 15) {
+      setTriondaoState('sad');
+      setBubble("DEFENDEU o goleiro! Que muralha!");
+  } 
+  // Gol
+  else {
+      gameScore++;
+      document.getElementById('game-score').innerText = gameScore;
+      setTriondaoState('celebrating');
+      setBubble("GOOOOOOOOOOOL! Pega essa coruja!");
+      createConfetti();
   }
-}
 
-function saveMade() {
-  gameScore++;
-  document.getElementById('game-score').innerText = gameScore;
-  setTriondaoState('celebrating');
-  setBubble("DEFESAÇA!!!");
-  createConfetti();
-  setTimeout(shootBall, 1500);
-}
-
-function goalScored() {
-  setTriondaoState('sad');
-  setBubble("Gool deles... foi no ângulo!");
-  setTimeout(shootBall, 1500);
+  setTimeout(() => {
+    if (shotsTaken >= maxShots) {
+      endGame();
+    } else {
+      setTriondaoState('idle');
+      setBubble("Ajeita a bola... bate mais uma!");
+      // Reseta bola visualmente
+      ball.x = 250; ball.y = 320;
+    }
+  }, 2000);
 }
 
 function endGame() {
-  cancelAnimationFrame(gameReq);
+  gameIsRunning = false;
   document.getElementById('game-overlay').style.display = 'flex';
-  document.getElementById('game-msg').innerText = `Fim de Jogo! Defesas: ${gameScore}`;
-  setBubble(`Você defendeu ${gameScore} chutes!`);
+  document.getElementById('game-msg').innerText = `Fim de Jogo! Gols: ${gameScore}/${maxShots}`;
+  setBubble(`Você fez ${gameScore} gols de ${maxShots} chances!`);
 }
 
 // === CONFETTI ===
@@ -353,32 +403,91 @@ window.onload = () => {
 let matches2026 = [];
 let matchId = 1;
 
-// 1. Gerando os 72 jogos da Fase de Grupos (Grupos A até L)
-const groups = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+// Seleções Reais (Sorteio)
+const groupTeams = {
+  'A': ['México', 'África do Sul', 'Coreia do Sul', 'Repescagem 1 (Europa)'],
+  'B': ['Canadá', 'Catar', 'Suíça', 'Repescagem 2 (Europa)'],
+  'C': ['Brasil', 'Marrocos', 'Haiti', 'Escócia'],
+  'D': ['Estados Unidos', 'Paraguai', 'Austrália', 'Repescagem 3 (Europa)'],
+  'E': ['Alemanha', 'Curaçao', 'Costa do Marfim', 'Equador'],
+  'F': ['Holanda', 'Japão', 'Repescagem 4 (Europa)', 'Tunísia'],
+  'G': ['Bélgica', 'Egito', 'Irã', 'Nova Zelândia'],
+  'H': ['Espanha', 'Cabo Verde', 'Arábia Saudita', 'Uruguai'],
+  'I': ['França', 'Senegal', 'Repescagem (Mundo)', 'Noruega'],
+  'J': ['Argentina', 'Argélia', 'Áustria', 'Jordânia'],
+  'K': ['Portugal', 'Repescagem (Mundo)', 'Uzbequistão', 'Colômbia'],
+  'L': ['Inglaterra', 'Croácia', 'Gana', 'Panamá']
+};
+
+// 1. Gerando os 72 jogos da Fase de Grupos
+const groups = Object.keys(groupTeams);
 groups.forEach(g => {
-  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}1`, away: `${g}2` });
-  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}3`, away: `${g}4` });
-  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}1`, away: `${g}3` });
-  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}4`, away: `${g}2` });
-  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}4`, away: `${g}1` });
-  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}2`, away: `${g}3` });
+  const t = groupTeams[g];
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: t[0], away: t[1] });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: t[2], away: t[3] });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: t[0], away: t[2] });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: t[3], away: t[1] });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: t[3], away: t[0] });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: t[1], away: t[2] });
 });
 
-// 2. Inserindo as informações já confirmadas e a simulação do Brasil
-function setMatch(h, a, nH, nA, d, t, v) {
+// 2. Inserindo as datas conhecidas
+function setMatch(h, a, d, t, v) {
   let m = matches2026.find(x => x.home === h && x.away === a);
-  if (m) {
-    if (nH) m.home = nH; if (nA) m.away = nA;
-    m.date = d; m.time = t; m.venue = v;
+  if (!m) m = matches2026.find(x => x.home === a && x.away === h);
+  if (m) { 
+      m.home = h; m.away = a;
+      m.date = d; m.time = t; m.venue = v; 
   }
 }
-setMatch("A1", "A2", "México", "A2", "11/06/2026", "17:00", "Estádio Azteca");
-setMatch("A3", "A4", "A3", "A4", "11/06/2026", "20:00", "Guadalajara");
-setMatch("B1", "B2", "Estados Unidos", "B2", "12/06/2026", "16:00", "Los Angeles");
-setMatch("C1", "C2", "Canadá", "C2", "12/06/2026", "19:00", "Toronto");
-setMatch("G1", "G2", "Brasil", "G2", "21/06/2026", "16:00", "Dallas");
-setMatch("G4", "G1", "G4", "Brasil", "26/06/2026", "19:00", "Houston");
-setMatch("G2", "G3", "G2", "Brasil", "01/07/2026", "15:00", "Miami");
+
+// Grupo A
+setMatch("México", "África do Sul", "11/06/2026", "16:00", "CDMX (Azteca)");
+setMatch("Coreia do Sul", "Repescagem 1 (Europa)", "11/06/2026", "23:00", "Guadalajara");
+setMatch("México", "Coreia do Sul", "18/06/2026", "22:00", "Guadalajara");
+setMatch("África do Sul", "Repescagem 1 (Europa)", "18/06/2026", "13:00", "Atlanta");
+setMatch("Repescagem 1 (Europa)", "México", "24/06/2026", "22:00", "CDMX (Azteca)");
+setMatch("Coreia do Sul", "África do Sul", "24/06/2026", "22:00", "Monterrey");
+
+// Grupo B
+setMatch("Canadá", "Repescagem 2 (Europa)", "12/06/2026", "16:00", "Toronto");
+setMatch("Catar", "Suíça", "13/06/2026", "16:00", "Santa Clara");
+setMatch("Canadá", "Catar", "18/06/2026", "19:00", "Vancouver");
+setMatch("Repescagem 2 (Europa)", "Suíça", "18/06/2026", "16:00", "Los Angeles");
+setMatch("Suíça", "Canadá", "24/06/2026", "16:00", "Vancouver");
+setMatch("Catar", "Repescagem 2 (Europa)", "24/06/2026", "16:00", "Seattle");
+
+// Grupo C
+setMatch("Brasil", "Marrocos", "13/06/2026", "19:00", "New York");
+setMatch("Haiti", "Escócia", "13/06/2026", "22:00", "Boston");
+setMatch("Brasil", "Haiti", "19/06/2026", "22:00", "Filadélfia");
+setMatch("Marrocos", "Escócia", "19/06/2026", "19:00", "Boston");
+setMatch("Escócia", "Brasil", "24/06/2026", "19:00", "Miami");
+setMatch("Haiti", "Marrocos", "24/06/2026", "19:00", "Atlanta");
+
+// Grupo D
+setMatch("Estados Unidos", "Paraguai", "12/06/2026", "22:00", "Los Angeles");
+setMatch("Austrália", "Repescagem 3 (Europa)", "14/06/2026", "01:00", "Vancouver");
+setMatch("Estados Unidos", "Austrália", "19/06/2026", "16:00", "Seattle");
+setMatch("Paraguai", "Repescagem 3 (Europa)", "19/06/2026", "01:00", "Santa Clara");
+setMatch("Repescagem 3 (Europa)", "Estados Unidos", "25/06/2026", "23:00", "Los Angeles");
+setMatch("Austrália", "Paraguai", "25/06/2026", "23:00", "Santa Clara");
+
+// Grupo E
+setMatch("Alemanha", "Curaçao", "14/06/2026", "14:00", "Houston");
+setMatch("Costa do Marfim", "Equador", "14/06/2026", "20:00", "Filadélfia");
+setMatch("Alemanha", "Costa do Marfim", "20/06/2026", "17:00", "Toronto");
+setMatch("Curaçao", "Equador", "20/06/2026", "21:00", "Kansas City");
+setMatch("Equador", "Alemanha", "25/06/2026", "17:00", "New York");
+setMatch("Costa do Marfim", "Curaçao", "25/06/2026", "17:00", "Filadélfia");
+
+// Grupo F
+setMatch("Holanda", "Japão", "14/06/2026", "17:00", "Dallas");
+setMatch("Repescagem 4 (Europa)", "Tunísia", "14/06/2026", "23:00", "Monterrey");
+setMatch("Holanda", "Repescagem 4 (Europa)", "20/06/2026", "14:00", "Houston");
+setMatch("Japão", "Tunísia", "20/06/2026", "01:00", "Monterrey");
+setMatch("Tunísia", "Holanda", "25/06/2026", "20:00", "Kansas City");
+setMatch("Repescagem 4 (Europa)", "Japão", "25/06/2026", "20:00", "Dallas");
 
 // 3. Gerando o Mata-Mata (32 jogos)
 for(let i=1; i<=16; i++) matches2026.push({ id: matchId++, group: "16 Avos", date: "Mata-Mata", time: "--:--", venue: "A definir", home: `Classificado ${i*2-1}`, away: `Classificado ${i*2}` });
