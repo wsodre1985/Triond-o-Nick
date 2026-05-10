@@ -144,26 +144,14 @@ header h1 {
   50% { transform: scaleX(1.1); opacity: 0.35; }
 }
 
-/* Ball pentagon pattern */
-.ball-pattern {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-}
-
+/* Classic ball pattern */
 .pentagon {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  background: #333;
+  position: absolute; width: 30px; height: 30px; background: #222;
   clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
-  opacity: 0.7;
 }
-
-.p1 { top: 5px; left: 40px; }
-.p2 { top: 30px; left: 10px; transform: rotate(30deg); }
-.p3 { top: 30px; right: 10px; transform: rotate(-20deg); }
-.p4 { bottom: 18px; left: 20px; transform: rotate(50deg); width: 18px; height: 18px; }
-.p5 { bottom: 18px; right: 20px; transform: rotate(-40deg); width: 18px; height: 18px; }
+.p-top { top: -10px; left: 35px; transform: rotate(180deg); }
+.p-bl { bottom: 5px; left: 5px; transform: rotate(72deg); }
+.p-br { bottom: 5px; right: 5px; transform: rotate(-72deg); }
 
 /* Face */
 .face {
@@ -213,56 +201,32 @@ header h1 {
 }
 
 .mouth {
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 22px;
-  height: 12px;
-  border: 2px solid #333;
-  border-top: none;
-  border-radius: 0 0 15px 15px;
-  background: #ff6b6b;
+  position: absolute; bottom: 0px; left: 50%; transform: translateX(-50%);
+  width: 26px; height: 14px; border: 3px solid #222; border-top: none;
+  border-radius: 0 0 20px 20px; background: #ff4757; transition: all 0.2s;
 }
 
-.mouth.happy {
-  animation: talk 0.5s ease-in-out;
-}
-
-.mouth.surprised {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid #333;
-  border-top: 2px solid #333;
-}
-
-.mouth.thinking {
-  width: 18px;
-  height: 6px;
-  border-radius: 0 0 10px 10px;
-  transform: translateX(-50%) rotate(10deg);
-}
-
+#triondao.talking .mouth { animation: talk 0.3s ease-in-out infinite alternate; }
 @keyframes talk {
-  0%, 100% { height: 12px; }
-  25% { height: 8px; }
-  50% { height: 14px; }
-  75% { height: 6px; }
+    0% { height: 6px; border-radius: 0 0 10px 10px; }
+    100% { height: 18px; border-radius: 0 0 20px 20px; }
 }
 
-.blush {
-  position: absolute;
-  width: 14px;
-  height: 8px;
-  background: rgba(255,150,150,0.5);
-  border-radius: 50%;
-  top: 55px;
-  z-index: 4;
+#triondao.thinking .ball-body { animation: thinkWobble 1s ease-in-out infinite; }
+#triondao.thinking .pupil { transform: translate(5px, -5px); }
+#triondao.thinking .mouth { width: 15px; height: 15px; border-radius: 50%; border: 3px solid #222; background: transparent; }
+@keyframes thinkWobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(8deg); }
+    75% { transform: rotate(-8deg); }
 }
 
-.left-blush { left: 12px; }
-.right-blush { right: 12px; }
+#triondao.celebrating .ball-body { animation: celebrateJump 0.5s ease-in-out 2; }
+#triondao.celebrating .mouth { width: 35px; height: 20px; }
+@keyframes celebrateJump {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-30px) rotate(15deg); }
+}
 
 /* Thinking animation */
 #triondao.thinking .ball-body {
@@ -331,15 +295,15 @@ header h1 {
 }
 
 /* === CHAT === */
-.tab-content {
+.content-area {
   display: none;
 }
 
-.tab-content.active {
+.content-area.active {
   display: block;
 }
 
-#chat-messages {
+#chat-window {
   background: rgba(0,0,0,0.3);
   border-radius: 20px;
   padding: 15px;
@@ -350,16 +314,16 @@ header h1 {
   scroll-behavior: smooth;
 }
 
-#chat-messages::-webkit-scrollbar {
+#chat-window::-webkit-scrollbar {
   width: 6px;
 }
 
-#chat-messages::-webkit-scrollbar-thumb {
+#chat-window::-webkit-scrollbar-thumb {
   background: rgba(255,215,0,0.5);
   border-radius: 3px;
 }
 
-.msg {
+.message {
   margin-bottom: 12px;
   animation: msgSlide 0.3s ease-out;
 }
@@ -369,15 +333,15 @@ header h1 {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.msg.bot {
+.message.bot {
   text-align: left;
 }
 
-.msg.user {
+.message.user {
   text-align: right;
 }
 
-.msg .bubble {
+.message .bubble {
   display: inline-block;
   padding: 10px 15px;
   border-radius: 18px;
@@ -387,26 +351,26 @@ header h1 {
   word-wrap: break-word;
 }
 
-.msg.bot .bubble {
+.message.bot .bubble {
   background: linear-gradient(135deg, #ffd700, #ffb700);
   color: #1a3a1a;
   border-bottom-left-radius: 5px;
   font-weight: 600;
 }
 
-.msg.user .bubble {
+.message.user .bubble {
   background: rgba(255,255,255,0.2);
   color: #fff;
   border-bottom-right-radius: 5px;
 }
 
-.msg .sender {
+.message .sender {
   font-size: 0.75em;
   margin-bottom: 3px;
   opacity: 0.7;
 }
 
-.msg.bot .sender { color: #ffd700; }
+.message.bot .sender { color: #ffd700; }
 
 .typing-indicator {
   display: inline-flex;

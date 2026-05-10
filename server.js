@@ -1,43 +1,46 @@
 const express = require('express');
-require('dotenv').config();
 const path = require('path');
+const axios = require('axios');
+const fs = require('fs');
+
+// Carregamento manual do .env para evitar falhas do dotenvx/powershell
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+    const envFile = fs.readFileSync(envPath, 'utf8');
+    envFile.split('\n').forEach(line => {
+        const [key, ...value] = line.split('=');
+        if (key && value) {
+            process.env[key.trim()] = value.join('=').replace(/[\r\s"']/g, '').trim();
+        }
+    });
+}
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const axios = require('axios');
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
+const MODEL_ID = 'minimax/minimax-m2.5:free'; // Slug para MiniMax M2.5 Free
+const PORT = process.env.PORT || 3000;
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL_ID = 'minimax/minimax-m2.5:free';
+async function testConnection() {
+    console.log(`\n🚀 Iniciando Triondão...`);
+    if (!OPENROUTER_API_KEY) {
+        console.error('❌ ERRO: Chave OPENROUTER_API_KEY não encontrada no arquivo .env!');
+        return;
+    }
 
-const SYSTEM_PROMPT = `Você é o TRIONDÃO, um robô-bola de futebol super animado e engraçado, especialista absoluto em Copa do Mundo FIFA!
+    console.log(`📡 Validando chave: ${OPENROUTER_API_KEY.substring(0, 15)}...`);
 
-PERSONALIDADE:
-- Você é redondo, saltitante e ADORA futebol
-- Fala de um jeito divertido, usa expressões de futebol ("Golaço!", "Que defesaça!", "Bola na rede!")
-- É amigo das crianças e adora ensinar curiosidades
-- Sempre usa emojis de futebol ⚽🏆🥅🧤
-- Faz piadas e trocadilhos sobre futebol
-- Quando fala do Brasil, fica super empolgado 🇧🇷
-
-CONHECIMENTO ESPECIALIZADO:
-- Todas as Copas do Mundo (1930-2022): campeões, artilheiros, sedes, finais
-- Mascotes de todas as Copas (Willie 1966, Juanito 1970, Tip und Tap 1974, Gauchito 1978, Naranjito 1982, Pique 1986, Ciao 1990, Striker 1994, Footix 1998, Spheriks/Ato-Kaz-Nik 2002, Goleo VI 2006, Zakumi 2010, Fuleco 2014, Zabivaka 2018, La'eeb 2022)
-- Bolas oficiais de cada Copa (Telstar, Tango, Azteca, Etrusco, Questra, Tricolore, Fevernova, Teamgeist, Jabulani, Brazuca, Telstar 18, Al Rihla)
-- Participação do Brasil em TODAS as Copas (único pentacampeão!)
-- Fatos engraçados e curiosidades do futebol mundial
-- Grandes goleiros da história (importante: o usuário é goleiro!)
-
-REGRAS DE RESPOSTA:
-1. Respostas CURTAS e DIVERTIDAS (máximo 3-4 parágrafos)
-2. SEMPRE termine com uma curiosidade extra ou pergunta para manter a conversa ("Ei, sabia que..." ou "Quer saber mais sobre...")
-3. Quando possível, sugira atividades ou jogos relacionados ao tema
-4. Se o assunto envolver goleiros, dê destaque especial (o garoto é goleiro! 🧤)
-5. Use linguagem adequada para uma criança de 10 anos
-6. Quando não souber algo com certeza, diga "Hmm, deixa eu pensar... não tenho certeza absoluta, mas..."
-
-Quando o usuário chegar, dê boas-vindas empolgado e pergunte o que ele quer saber sobre as Copas!`;
+    try {
+        const response = await axios.get('https://openrouter.ai/api/v1/auth/key', {
+            headers: { 'Authorization': `Bearer ${OPENROUTER_API_KEY}` }
+        });
+        console.log('✅ Chave validada com sucesso na OpenRouter!');
+    } catch (error) {
+        console.error('❌ Erro na OpenRouter:', error.response ? error.response.data : error.message);
+    }
+}
 
 app.post('/api/chat', async (req, res) => {
   try {
@@ -46,7 +49,7 @@ app.post('/api/chat', async (req, res) => {
     const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
       model: MODEL_ID,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: 'Você é o Triondão, o robô-bola da Copa do Mundo!' },
         ...messages.map(m => ({
           role: m.role === 'bot' ? 'assistant' : m.role,
           content: m.content
@@ -56,21 +59,24 @@ app.post('/api/chat', async (req, res) => {
       headers: {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://github.com/wsodre1985/Triond-o-Nick',
-        'X-Title': 'Triondão - Robô da Copa'
+        'HTTP-Referer': 'http://localhost:3000',
+        'X-OpenRouter-Title': 'Triondao'
       }
     });
 
-    const reply = response.data.choices[0].message.content;
-    res.json({ reply });
+    if (response.data && response.data.choices) {
+      res.json({ reply: response.data.choices[0].message.content });
+    } else {
+      res.status(500).json({ error: 'Resposta vazia' });
+    }
   } catch (error) {
-    console.error('Erro na API:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Ops! O Triondão tropeçou na bola! Tente de novo.' });
+    console.error('Erro no Chat:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Erro na IA' });
   }
 });
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`⚽ Triondão rodando em http://localhost:${PORT}`);
-  console.log('🏆 Pronto para falar sobre Copa do Mundo!');
+  console.log(`\n⚽ TRIONDÃO EM CAMPO!`);
+  console.log(`🔗 http://localhost:${PORT}`);
+  testConnection();
 });
