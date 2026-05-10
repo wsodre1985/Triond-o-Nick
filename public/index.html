@@ -132,12 +132,53 @@
     <section id="bolao" class="content-area">
       <div class="card">
         <h2>Seu Bolão da Copa 🎯</h2>
-        <p style="margin-bottom: 15px; color: #ddd;">Dê o seu palpite para os jogos! Fica tudo salvo no seu navegador.</p>
-        <div class="matches-list bolao-list" id="bolao-list">
-          <!-- Gerado via JS -->
+        <p style="margin-bottom: 15px; color: #ddd;">Crie seu perfil, dê seus palpites e dispute com seus amigos no mesmo dispositivo!</p>
+        
+        <div class="bolao-profile-section" style="background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+          <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+            <input type="text" id="new-player-name" placeholder="Seu Nome" style="flex:1; padding: 8px; border-radius: 8px; border:none; font-family: 'Nunito', sans-serif;">
+            <button onclick="createPlayer()" style="background: #2ecc71; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">Criar Jogador</button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <label style="font-weight: bold; color: #ffd700;">Jogador Atual:</label>
+            <select id="player-selector" onchange="changePlayer()" style="flex:1; padding: 8px; border-radius: 8px; font-family: 'Nunito', sans-serif;">
+              <option value="">Selecione um jogador...</option>
+            </select>
+          </div>
         </div>
-        <button class="btn-large" onclick="saveBolao()" style="margin-top: 20px; width: 100%;">Salvar Meus Palpites</button>
-        <div id="bolao-msg" style="color: #2ecc71; margin-top: 10px; font-weight: bold; height: 20px;"></div>
+
+        <div id="bolao-content" style="display: none;">
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button onclick="showBolaoTab('palpites')" id="btn-tab-palpites" style="flex:1; padding: 10px; border-radius: 8px; border: none; background: #ffaa00; color: #1a5e1a; font-weight: bold; cursor: pointer;">Meus Palpites</button>
+            <button onclick="showBolaoTab('ranking')" id="btn-tab-ranking" style="flex:1; padding: 10px; border-radius: 8px; border: none; background: #444; color: white; font-weight: bold; cursor: pointer;">🏆 Ranking Geral</button>
+          </div>
+
+          <!-- Área de Palpites -->
+          <div id="area-palpites">
+            <div class="matches-list bolao-list" id="bolao-list">
+              <!-- Gerado via JS -->
+            </div>
+            <button class="btn-large" onclick="saveBolao()" style="margin-top: 20px; width: 100%;">Salvar Meus Palpites</button>
+            <div id="bolao-msg" style="color: #2ecc71; margin-top: 10px; font-weight: bold; height: 20px;"></div>
+          </div>
+
+          <!-- Área de Ranking -->
+          <div id="area-ranking" style="display: none;">
+             <table style="width: 100%; text-align: left; border-collapse: collapse; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden;">
+                <thead>
+                  <tr style="background: rgba(0,0,0,0.5); color: #ffd700;">
+                    <th style="padding: 12px;">Posição</th>
+                    <th style="padding: 12px;">Jogador</th>
+                    <th style="padding: 12px;">Pontos</th>
+                  </tr>
+                </thead>
+                <tbody id="ranking-list">
+                  <!-- Gerado via JS -->
+                </tbody>
+             </table>
+             <p style="font-size: 0.8em; margin-top: 15px; color: #ccc;">* Pontuação: 3 pts por placar exato, 1 pt por acertar o vencedor.</p>
+          </div>
+        </div>
       </div>
     </section>
 

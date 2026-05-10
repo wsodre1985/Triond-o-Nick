@@ -534,6 +534,7 @@ function createConfetti() {
 // Inicialização
 window.onload = () => {
   updateHistoryDisplay();
+  updatePlayerSelect();
   setBubble("E aí, Paredão! Sou o Triondão. O que quer saber da Copa?");
 };
 
@@ -674,10 +675,67 @@ function filterTabela(term) {
   renderTabela(input);
 }
 
+// === BOLÃO MULTIPLAYER ===
+let bolaoData = JSON.parse(localStorage.getItem('triondao_bolao_multi')) || {};
+let currentPlayer = "";
+
+function createPlayer() {
+  const name = document.getElementById('new-player-name').value.trim();
+  if(!name) return;
+  if(!bolaoData[name]) {
+    bolaoData[name] = {};
+    localStorage.setItem('triondao_bolao_multi', JSON.stringify(bolaoData));
+    updatePlayerSelect();
+    document.getElementById('new-player-name').value = '';
+    setBubble(`Aí sim, ${name}! Perfil criado, boa sorte no bolão!`);
+    
+    // Auto-seleciona o jogador criado
+    document.getElementById('player-selector').value = name;
+    changePlayer();
+  } else {
+    setBubble(`Opa, já existe um jogador com o nome ${name}!`);
+  }
+}
+
+function updatePlayerSelect() {
+  const sel = document.getElementById('player-selector');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Selecione um jogador...</option>';
+  Object.keys(bolaoData).forEach(p => {
+    sel.innerHTML += `<option value="${p}">${p}</option>`;
+  });
+  sel.value = currentPlayer;
+}
+
+function changePlayer() {
+  currentPlayer = document.getElementById('player-selector').value;
+  if(currentPlayer) {
+    document.getElementById('bolao-content').style.display = 'block';
+    showBolaoTab('palpites');
+    renderBolao();
+    setBubble(`E aí ${currentPlayer}, pronto para palpitar?`);
+  } else {
+    document.getElementById('bolao-content').style.display = 'none';
+  }
+}
+
+function showBolaoTab(tab) {
+  document.getElementById('area-palpites').style.display = tab === 'palpites' ? 'block' : 'none';
+  document.getElementById('area-ranking').style.display = tab === 'ranking' ? 'block' : 'none';
+  
+  document.getElementById('btn-tab-palpites').style.background = tab === 'palpites' ? '#ffaa00' : '#444';
+  document.getElementById('btn-tab-palpites').style.color = tab === 'palpites' ? '#1a5e1a' : 'white';
+  
+  document.getElementById('btn-tab-ranking').style.background = tab === 'ranking' ? '#ffaa00' : '#444';
+  document.getElementById('btn-tab-ranking').style.color = tab === 'ranking' ? '#1a5e1a' : 'white';
+
+  if (tab === 'ranking') updateRanking();
+}
+
 function renderBolao() {
   const container = document.getElementById('bolao-list');
   container.innerHTML = '';
-  const saved = JSON.parse(localStorage.getItem('triondao_bolao') || '{}');
+  const saved = bolaoData[currentPlayer] || {};
 
   matches2026.forEach(m => {
     const sHome = saved[`m_${m.id}_home`] !== undefined ? saved[`m_${m.id}_home`] : '';
@@ -695,21 +753,106 @@ function renderBolao() {
           <input type="number" min="0" class="bolao-input" id="m_${m.id}_away" value="${sAway}">
           <span>${m.away}</span>
         </div>
+        ${m.realHomeScore !== undefined ? `<div style="text-align:center; color:#ffd700; font-size:0.8em; margin-top:5px;">Resultado Real: ${m.realHomeScore} x ${m.realAwayScore}</div>` : ''}
       </div>
     `;
   });
 }
 
 function saveBolao() {
+  if(!currentPlayer) return;
   const saved = {};
   matches2026.forEach(m => {
     saved[`m_${m.id}_home`] = document.getElementById(`m_${m.id}_home`).value;
     saved[`m_${m.id}_away`] = document.getElementById(`m_${m.id}_away`).value;
   });
-  localStorage.setItem('triondao_bolao', JSON.stringify(saved));
+  bolaoData[currentPlayer] = saved;
+  localStorage.setItem('triondao_bolao_multi', JSON.stringify(bolaoData));
   
   const msg = document.getElementById('bolao-msg');
   msg.innerText = "✅ Palpites salvos com sucesso!";
   setTriondaoState('celebrating');
   setTimeout(() => msg.innerText = "", 3000);
+}
+
+// Easter Egg / Função de Teste: Como os jogos ainda não aconteceram, podemos simular os jogos da primeira rodada para ver o ranking
+function simularResultados() {
+  matches2026.forEach(m => {
+      if (m.date === "11/06/2026" || m.date === "12/06/2026" || m.date === "13/06/2026" || m.date === "14/06/2026") {
+          if(Math.random() > 0.5) {
+             m.realHomeScore = Math.floor(Math.random() * 4);
+             m.realAwayScore = Math.floor(Math.random() * 4);
+          }
+      }
+  });
+  setBubble("Resultados simulados gerados para teste de ranking!");
+  if (document.getElementById('area-ranking').style.display === 'block') {
+      updateRanking();
+  } else if (currentPlayer) {
+      renderBolao();
+  }
+}
+
+// Ativar easter egg ao clicar 5 vezes no Triondão
+let clickCountEgg = 0;
+document.getElementById('triondao').addEventListener('click', () => {
+    clickCountEgg++;
+    if(clickCountEgg === 5) {
+        simularResultados();
+        clickCountEgg = 0;
+    }
+});
+
+function updateRanking() {
+  const tbody = document.getElementById('ranking-list');
+  tbody.innerHTML = '';
+  
+  let scores = [];
+  
+  Object.keys(bolaoData).forEach(player => {
+      let pts = 0;
+      const palpites = bolaoData[player];
+      
+      matches2026.forEach(m => {
+          if (m.realHomeScore !== undefined && m.realAwayScore !== undefined) {
+              const pHome = parseInt(palpites[`m_${m.id}_home`]);
+              const pAway = parseInt(palpites[`m_${m.id}_away`]);
+              
+              if (!isNaN(pHome) && !isNaN(pAway)) {
+                  const realDiff = m.realHomeScore - m.realAwayScore;
+                  const pDiff = pHome - pAway;
+                  
+                  if (m.realHomeScore === pHome && m.realAwayScore === pAway) {
+                      pts += 3; // Placar exato
+                  } else if ((realDiff > 0 && pDiff > 0) || (realDiff < 0 && pDiff < 0) || (realDiff === 0 && pDiff === 0)) {
+                      pts += 1; // Acertou vencedor/empate
+                  }
+              }
+          }
+      });
+      scores.push({ player, pts });
+  });
+  
+  // Ordenar por pontos (decrescente)
+  scores.sort((a,b) => b.pts - a.pts);
+  
+  if (scores.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:15px; color:#ccc;">Nenhum jogador cadastrado.</td></tr>';
+      return;
+  }
+  
+  scores.forEach((s, idx) => {
+      let icon = "🏅";
+      if (idx === 0) icon = "🥇";
+      else if (idx === 1) icon = "🥈";
+      else if (idx === 2) icon = "🥉";
+      
+      tbody.innerHTML += `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+          <td style="padding: 12px; font-weight: bold; color: #ffd700; width: 60px;">${idx + 1}º ${icon}</td>
+          <td style="padding: 12px; color: white;">${s.player}</td>
+          <td style="padding: 12px; font-weight: bold; color: #2ecc71; text-align:right;">${s.pts} pts</td>
+        </tr>
+      `;
+  });
 }
