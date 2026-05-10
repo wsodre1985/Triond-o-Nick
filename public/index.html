@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚽ Triondão - Robô da Copa!</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header>
+      <h1>⚽ TRIONDÃO ⚽</h1>
+      <p class="subtitle">Seu amigão especialista em Copa do Mundo!</p>
+      <nav class="tabs">
+        <button class="tab active" data-tab="chat" onclick="switchTab('chat')">💬 Chat</button>
+        <button class="tab" data-tab="quiz" onclick="switchTab('quiz')">🧠 Quiz da Copa</button>
+        <button class="tab" data-tab="penalty" onclick="switchTab('penalty')">🥅 Defenda o Gol!</button>
+      </nav>
+    </header>
+
+    <!-- Personagem Triondão -->
+    <div id="triondao-container">
+      <div id="triondao" class="bouncing">
+        <div class="ball-body">
+          <div class="ball-pattern">
+            <div class="pentagon p1"></div>
+            <div class="pentagon p2"></div>
+            <div class="pentagon p3"></div>
+            <div class="pentagon p4"></div>
+            <div class="pentagon p5"></div>
+          </div>
+          <div class="face">
+            <div class="eye left-eye">
+              <div class="pupil"></div>
+            </div>
+            <div class="eye right-eye">
+              <div class="pupil"></div>
+            </div>
+            <div class="mouth happy"></div>
+          </div>
+          <div class="blush left-blush"></div>
+          <div class="blush right-blush"></div>
+        </div>
+        <div class="shadow"></div>
+      </div>
+      <div id="speech-bubble" class="hidden">
+        <p id="speech-text"></p>
+      </div>
+    </div>
+
+    <!-- Tab: Chat -->
+    <section id="tab-chat" class="tab-content active">
+      <div id="chat-messages"></div>
+      <div class="input-area">
+        <input type="text" id="chat-input" placeholder="Pergunte sobre a Copa do Mundo..."
+               onkeypress="if(event.key==='Enter') sendMessage()">
+        <button id="btn-send" onclick="sendMessage()">⚽ Chutar!</button>
+        <button id="btn-mic" onclick="toggleVoice()">🎙️</button>
+      </div>
+    </section>
+
+    <!-- Tab: Quiz -->
+    <section id="tab-quiz" class="tab-content">
+      <div id="quiz-area">
+        <div id="quiz-score">
+          <span>⭐ Pontos: <strong id="score">0</strong></span>
+          <span>❓ Pergunta: <strong id="q-number">0</strong>/10</span>
+        </div>
+        <div id="quiz-question-box">
+          <div id="quiz-history" class="history-board">
+            <i class="fas fa-trophy"></i> Histórico: <span id="total-games">0</span> jogos | <span id="total-score">0</span> acertos!
+          </div>
+          <p id="quiz-question">Clique em "Começar" para iniciar o Quiz da Copa!</p>
+          <div id="quiz-options"></div>
+        </div>
+        <button id="btn-start-quiz" onclick="startQuiz()">🏆 Começar Quiz!</button>
+        <div id="quiz-result" class="hidden"></div>
+      </div>
+    </section>
+
+    <!-- Tab: Penalty -->
+    <section id="tab-penalty" class="tab-content">
+      <div id="penalty-area">
+        <div id="penalty-score-board">
+          <span>🧤 Defesas: <strong id="saves">0</strong></span>
+          <span>⚽ Gols: <strong id="goals-against">0</strong></span>
+          <span>🎯 Chutes: <strong id="total-shots">0</strong>/10</span>
+        </div>
+        <canvas id="penalty-canvas" width="600" height="400"></canvas>
+        <p id="penalty-msg">Clique na área do gol onde você quer pular para defender!</p>
+        <button id="btn-start-penalty" onclick="startPenalty()">🥅 Começar!</button>
+      </div>
+    </section>
+
+    <!-- Confetti container -->
+    <div id="confetti-container"></div>
+  </div>
+
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "bolinha-copa",
+  "version": "1.0.0",
+  "description": "Triondão - Robô-bola especialista em Copa do Mundo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.16.0",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.0"
+  }
+}
