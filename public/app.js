@@ -16,6 +16,8 @@ document.querySelectorAll('.tab').forEach(tab => {
     if (target === 'chat') {
       setBubble("Voltou pro vestiário pra bater um papo? Manda a pergunta!");
     } else if (target === 'penalty') {
+      setBubble("Bate na bola e mostra que é artilheiro!");
+    } else if (target === 'goalkeeper') {
       setBubble("Hora de calçar as luvas! Defenda todos os chutes no Paredão!");
     } else if (target === 'quiz') {
       setBubble("Concentração total! Quero ver se você sabe tudo de Copa!");
@@ -227,6 +229,12 @@ function startGame() {
   document.getElementById('game-chances').innerText = shotsTaken;
   setBubble("Escolha o canto e mande pro fundo da rede!");
   
+  // Dificuldade
+  const diff = document.getElementById('penalty-difficulty').value;
+  if (diff === 'facil') { gloves.speed = 1.0; gloves.radius = 25; }
+  else if (diff === 'medio') { gloves.speed = 2.5; gloves.radius = 35; }
+  else if (diff === 'pro') { gloves.speed = 4.5; gloves.radius = 45; }
+  
   // Reseta posição da bola
   ball.x = 250; ball.y = 320; ball.active = false;
   
@@ -377,6 +385,136 @@ function endGame() {
   document.getElementById('game-overlay').style.display = 'flex';
   document.getElementById('game-msg').innerText = `Fim de Jogo! Gols: ${gameScore}/${maxShots}`;
   setBubble(`Você fez ${gameScore} gols de ${maxShots} chances!`);
+}
+
+// === LÓGICA DO JOGO DE DEFESA (GOLEIRO) ===
+const canvasGk = document.getElementById('goalkeeper-canvas');
+const ctxGk = canvasGk ? canvasGk.getContext('2d') : null;
+let gkReq;
+let ballGk = { x: 250, y: 350, radius: 25, tgtX: 250, tgtY: 100, speed: 0.05, progress: 0, active: false };
+let glovesGk = { x: 250, y: 175, radius: 35 };
+let scoreGk = 0;
+let shotsGk = 0;
+const maxShotsGk = 5;
+let gkBaseSpeed = 0.02;
+
+function startGoalkeeperGame() {
+  document.getElementById('gk-game-overlay').style.display = 'none';
+  scoreGk = 0;
+  shotsGk = 0;
+  document.getElementById('gk-game-score').innerText = scoreGk;
+  setBubble("Prepara a ponte! Lá vem bomba!");
+  
+  // Dificuldade
+  const diff = document.getElementById('gk-difficulty').value;
+  if (diff === 'facil') { gkBaseSpeed = 0.015; glovesGk.radius = 45; }
+  else if (diff === 'medio') { gkBaseSpeed = 0.025; glovesGk.radius = 35; }
+  else if (diff === 'pro') { gkBaseSpeed = 0.040; glovesGk.radius = 25; }
+
+  if(gkReq) cancelAnimationFrame(gkReq);
+  loopGk();
+  setTimeout(shootBallGk, 1000);
+}
+
+function shootBallGk() {
+  if (shotsGk >= maxShotsGk) {
+    endGkGame();
+    return;
+  }
+  shotsGk++;
+  ballGk.tgtX = Math.random() * 400 + 50;
+  ballGk.tgtY = Math.random() * 150 + 20;
+  ballGk.startX = 250;
+  ballGk.startY = 350;
+  ballGk.startR = 30;
+  ballGk.progress = 0;
+  ballGk.speed = gkBaseSpeed + (shotsGk * 0.003);
+  ballGk.active = true;
+}
+
+function loopGk() {
+  ctxGk.clearRect(0, 0, canvasGk.width, canvasGk.height);
+
+  ctxGk.strokeStyle = "rgba(255,255,255,0.3)";
+  ctxGk.lineWidth = 2;
+  ctxGk.strokeRect(20, 10, 460, 180);
+
+  if (ballGk.active) {
+    ballGk.progress += ballGk.speed;
+    const ease = ballGk.progress;
+    const currentX = ballGk.startX + (ballGk.tgtX - ballGk.startX) * ease;
+    const currentY = ballGk.startY + (ballGk.tgtY - ballGk.startY) * ease;
+    const currentR = ballGk.startR - (ballGk.startR - 15) * ease;
+
+    ctxGk.drawImage(imgBall, currentX - currentR, currentY - currentR, currentR * 2, currentR * 2);
+
+    if (ballGk.progress >= 1) {
+      ballGk.active = false;
+      goalScoredGk();
+    }
+  }
+
+  ctxGk.beginPath();
+  ctxGk.arc(glovesGk.x, glovesGk.y, glovesGk.radius, 0, Math.PI * 2);
+  ctxGk.fillStyle = "orange";
+  ctxGk.fill();
+  ctxGk.strokeStyle = "white";
+  ctxGk.stroke();
+
+  gkReq = requestAnimationFrame(loopGk);
+}
+
+if(canvasGk) {
+  canvasGk.addEventListener('mousemove', (e) => {
+    const rect = canvasGk.getBoundingClientRect();
+    glovesGk.x = (e.clientX - rect.left) * (canvasGk.width / rect.width);
+    glovesGk.y = (e.clientY - rect.top) * (canvasGk.height / rect.height);
+    attemptSaveGk();
+  });
+
+  canvasGk.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const rect = canvasGk.getBoundingClientRect();
+    const touch = e.touches[0];
+    glovesGk.x = (touch.clientX - rect.left) * (canvasGk.width / rect.width);
+    glovesGk.y = (touch.clientY - rect.top) * (canvasGk.height / rect.height);
+    attemptSaveGk();
+  }, { passive: false });
+}
+
+function attemptSaveGk() {
+  if (!ballGk.active) return;
+  const ease = ballGk.progress;
+  const bx = ballGk.startX + (ballGk.tgtX - ballGk.startX) * ease;
+  const by = ballGk.startY + (ballGk.tgtY - ballGk.startY) * ease;
+
+  const dist = Math.sqrt((bx - glovesGk.x) ** 2 + (by - glovesGk.y) ** 2);
+  if (dist < glovesGk.radius + 15) {
+    ballGk.active = false;
+    saveMadeGk();
+  }
+}
+
+function saveMadeGk() {
+  scoreGk++;
+  document.getElementById('gk-game-score').innerText = scoreGk;
+  setTriondaoState('celebrating');
+  setBubble("DEFESAÇA!!!");
+  createConfetti();
+  setTimeout(shootBallGk, 1500);
+}
+
+function goalScoredGk() {
+  setTriondaoState('sad');
+  setBubble("Gool deles... foi no ângulo!");
+  setTimeout(shootBallGk, 1500);
+}
+
+function endGkGame() {
+  cancelAnimationFrame(gkReq);
+  document.getElementById('gk-game-overlay').style.display = 'flex';
+  document.getElementById('gk-game-msg').innerText = `Fim de Jogo! Defesas: ${scoreGk}`;
+  setBubble(`Você defendeu ${scoreGk} chutes de ${maxShotsGk}!`);
 }
 
 // === CONFETTI ===

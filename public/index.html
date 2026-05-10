@@ -17,6 +17,7 @@
       <nav class="tabs">
         <button class="tab active" data-tab="chat">💬 Chat</button>
         <button class="tab" data-tab="quiz">🧠 Quiz</button>
+        <button class="tab" data-tab="goalkeeper">🧤 Defesa</button>
         <button class="tab" data-tab="penalty">⚽ Pênalti</button>
         <button class="tab" data-tab="tabela">📅 Tabela</button>
         <button class="tab" data-tab="bolao">🎯 Bolão</button>
@@ -71,6 +72,26 @@
       </div>
     </section>
 
+    <!-- Tab: Goalkeeper (Defesa) -->
+    <section id="goalkeeper" class="content-area">
+      <div id="game-area-gk">
+          <div class="score-board" style="font-size: 1.3em; font-weight: 800; color: #ffd700; margin-bottom: 10px;">Defesas: <span id="gk-game-score">0</span></div>
+          <p style="margin-bottom: 10px; font-weight:bold; color: #fff;">Arraste para mover as luvas e defender!</p>
+          <div id="game-canvas-container-gk" style="position: relative; width: 100%; max-width: 500px; margin: 0 auto; border-radius: 15px; overflow: hidden; border: 4px solid #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+              <canvas id="goalkeeper-canvas" width="500" height="350" style="display: block; width: 100%; cursor: crosshair; touch-action: none; background: #2d8a2d;"></canvas>
+              <div id="gk-game-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;">
+                  <div id="gk-game-msg" style="font-size: 2em; color: #ffd700; margin-bottom: 20px;">Pronto, Goleirão?</div>
+                  <select id="gk-difficulty" style="margin-bottom: 15px; padding: 10px; border-radius: 10px; font-family: 'Nunito', sans-serif; font-size: 1.1em;">
+                      <option value="facil">Nível: Fácil</option>
+                      <option value="medio" selected>Nível: Intermediário</option>
+                      <option value="pro">Nível: Profissional</option>
+                  </select>
+                  <button class="btn-large" onclick="startGoalkeeperGame()" style="padding: 15px 40px; border-radius: 30px; border: none; background: linear-gradient(135deg, #ffd700, #ffaa00); color: #1a5e1a; font-family: 'Fredoka One', cursive; font-size: 1.3em; cursor: pointer;">Começar!</button>
+              </div>
+          </div>
+      </div>
+    </section>
+
     <!-- Tab: Penalty (Chutador) -->
     <section id="penalty" class="content-area">
       <div id="game-area">
@@ -80,6 +101,11 @@
               <canvas id="penalty-canvas" width="500" height="350" style="display: block; width: 100%; cursor: crosshair; touch-action: none; background: #2d8a2d;"></canvas>
               <div id="game-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10;">
                   <div id="game-msg" style="font-size: 2em; color: #ffd700; margin-bottom: 20px;">Pronto para bater?</div>
+                  <select id="penalty-difficulty" style="margin-bottom: 15px; padding: 10px; border-radius: 10px; font-family: 'Nunito', sans-serif; font-size: 1.1em;">
+                      <option value="facil">Nível: Fácil</option>
+                      <option value="medio" selected>Nível: Intermediário</option>
+                      <option value="pro">Nível: Profissional</option>
+                  </select>
                   <button class="btn-large" onclick="startGame()" style="padding: 15px 40px; border-radius: 30px; border: none; background: linear-gradient(135deg, #ffd700, #ffaa00); color: #1a5e1a; font-family: 'Fredoka One', cursive; font-size: 1.3em; cursor: pointer;">Chutar!</button>
               </div>
           </div>
