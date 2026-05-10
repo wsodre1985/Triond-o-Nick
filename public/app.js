@@ -350,16 +350,43 @@ window.onload = () => {
 };
 
 // === TABELA E BOLÃO (COPA 2026) ===
-const matches2026 = [
-  { id: 1, group: "A", date: "11/06/2026", time: "17:00", venue: "Estádio Azteca", home: "México", away: "A2" },
-  { id: 2, group: "A", date: "11/06/2026", time: "20:00", venue: "Guadalajara", home: "A3", away: "A4" },
-  { id: 3, group: "B", date: "12/06/2026", time: "16:00", venue: "Los Angeles", home: "Estados Unidos", away: "B2" },
-  { id: 4, group: "C", date: "12/06/2026", time: "19:00", venue: "Toronto", home: "Canadá", away: "C2" },
-  { id: 71, group: "G", date: "21/06/2026", time: "16:00", venue: "Dallas", home: "Brasil", away: "G2" },
-  { id: 72, group: "G", date: "26/06/2026", time: "19:00", venue: "Houston", home: "G3", away: "Brasil" },
-  { id: 73, group: "G", date: "01/07/2026", time: "15:00", venue: "Miami", home: "Brasil", away: "G4" },
-  { id: 104, group: "FINAL", date: "19/07/2026", time: "16:00", venue: "New York/New Jersey", home: "Vencedor S1", away: "Vencedor S2" }
-];
+let matches2026 = [];
+let matchId = 1;
+
+// 1. Gerando os 72 jogos da Fase de Grupos (Grupos A até L)
+const groups = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+groups.forEach(g => {
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}1`, away: `${g}2` });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}3`, away: `${g}4` });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}1`, away: `${g}3` });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}4`, away: `${g}2` });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}4`, away: `${g}1` });
+  matches2026.push({ id: matchId++, group: g, date: "A definir", time: "--:--", venue: "A definir", home: `${g}2`, away: `${g}3` });
+});
+
+// 2. Inserindo as informações já confirmadas e a simulação do Brasil
+function setMatch(h, a, nH, nA, d, t, v) {
+  let m = matches2026.find(x => x.home === h && x.away === a);
+  if (m) {
+    if (nH) m.home = nH; if (nA) m.away = nA;
+    m.date = d; m.time = t; m.venue = v;
+  }
+}
+setMatch("A1", "A2", "México", "A2", "11/06/2026", "17:00", "Estádio Azteca");
+setMatch("A3", "A4", "A3", "A4", "11/06/2026", "20:00", "Guadalajara");
+setMatch("B1", "B2", "Estados Unidos", "B2", "12/06/2026", "16:00", "Los Angeles");
+setMatch("C1", "C2", "Canadá", "C2", "12/06/2026", "19:00", "Toronto");
+setMatch("G1", "G2", "Brasil", "G2", "21/06/2026", "16:00", "Dallas");
+setMatch("G4", "G1", "G4", "Brasil", "26/06/2026", "19:00", "Houston");
+setMatch("G2", "G3", "G2", "Brasil", "01/07/2026", "15:00", "Miami");
+
+// 3. Gerando o Mata-Mata (32 jogos)
+for(let i=1; i<=16; i++) matches2026.push({ id: matchId++, group: "16 Avos", date: "Mata-Mata", time: "--:--", venue: "A definir", home: `Classificado ${i*2-1}`, away: `Classificado ${i*2}` });
+for(let i=1; i<=8; i++) matches2026.push({ id: matchId++, group: "Oitavas", date: "Mata-Mata", time: "--:--", venue: "A definir", home: `Vencedor 16A-${i*2-1}`, away: `Vencedor 16A-${i*2}` });
+for(let i=1; i<=4; i++) matches2026.push({ id: matchId++, group: "Quartas", date: "Mata-Mata", time: "--:--", venue: "A definir", home: `Vencedor OIT-${i*2-1}`, away: `Vencedor OIT-${i*2}` });
+for(let i=1; i<=2; i++) matches2026.push({ id: matchId++, group: "Semifinal", date: "Mata-Mata", time: "--:--", venue: "A definir", home: `Vencedor QUA-${i*2-1}`, away: `Vencedor QUA-${i*2}` });
+matches2026.push({ id: matchId++, group: "3º Lugar", date: "18/07/2026", time: "A definir", venue: "Miami", home: "Perdedor SEMI-1", away: "Perdedor SEMI-2" });
+matches2026.push({ id: matchId++, group: "FINAL", date: "19/07/2026", time: "16:00", venue: "New York/New Jersey", home: "Vencedor SEMI-1", away: "Vencedor SEMI-2" });
 
 function renderTabela(filter = '') {
   const container = document.getElementById('tabela-list');
